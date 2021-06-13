@@ -4,7 +4,14 @@ import datetime
 class MagnitSpider(scrapy.Spider):
     name = 'Magnit'
     allowed_domains = ['magnitcosmetic.ru']
-    start_urls = ['https://magnitcosmetic.ru/catalog/kosmetika/brite_i_epilyatsiya/']
+    start_urls = ['https://magnitcosmetic.ru/catalog/kosmetika/brite_i_epilyatsiya/',
+                'https://magnitcosmetic.ru/catalog/kosmetika/detskaya_kosmetika_i_ukhod/']
+
+
+    def start_requests(self):
+        for category_url in self.start_urls:
+            yield scrapy.Request(category_url, callback=self.parse)
+
 
     def parse(self, response):
         pageCount = int(response.xpath("//div[@class='pageCount']/text()").extract_first())
@@ -17,7 +24,7 @@ class MagnitSpider(scrapy.Spider):
             # print(url_page)
             yield scrapy.Request(url_page, callback=self.parsePage)
         
-        quotes_base_url = 'https://magnitcosmetic.ru/catalog/kosmetika/brite_i_epilyatsiya/?PAGEN_1=%s'
+        quotes_base_url = response.urljoin('?PAGEN_1=%s')
         if  curPage != pageCount: 
             next_page = curPage + 1
             yield scrapy.Request(quotes_base_url % next_page, callback=self.parse)
@@ -25,7 +32,10 @@ class MagnitSpider(scrapy.Spider):
 
     def parsePage(self, response):
         timestamp = datetime.datetime.now().timestamp()
+        
         # print("----------------------parsePage--------------------------")
+        
+        
         result = {
             "timestamp": timestamp,
             # "RPC": RPC,
